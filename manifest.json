@@ -1,0 +1,59 @@
+{
+  "name": "Pathology Viva Questions with Answers",
+  "short_name": "Path Viva",
+  "description": "223 pathology viva questions with answers (general, haematology and systemic), practice mode, bookmarks, notes and handwriting. Works offline.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "en",
+  "categories": [
+    "education",
+    "medical"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Practice",
+      "short_name": "Practice",
+      "url": "./#/practice"
+    },
+    {
+      "name": "Search questions",
+      "short_name": "Search",
+      "url": "./#/search"
+    },
+    {
+      "name": "Bookmarks",
+      "short_name": "Bookmarks",
+      "url": "./#/bookmarks"
+    }
+  ]
+}
