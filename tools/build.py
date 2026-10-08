@@ -112,6 +112,9 @@ STATS = '<div class="stats"><div><b>%d</b><span>Viva questions</span></div><div>
 T = '<ul id="res"></ul></div></div></div></div><main'
 assert T in s
 s = s.replace(T, '<ul id="res"></ul></div></div></div>' + STATS + '</div><main', 1)
+NAV_OLD = re.search(r'<nav id="bnav">.*?</nav>', s, re.S)
+assert NAV_OLD
+s = s.replace(NAV_OLD.group(), '<nav id="bnav" aria-label="Main"><a href="#/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>Home</a><a href="#/topics"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h16"/></svg>Topics</a><a href="#/search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search</a><a href="#/practice"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>Practice</a><a href="#/bookmarks"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Bookmarks</a><a href="#/notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/></svg>Notes</a></nav>', 1)
 s = s.replace('content="#000000" media', 'content="#0c131f" media').replace('content="#f7f4f2" media', 'content="#f7f6f2" media')
 CSP = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'\"><meta name=\"referrer\" content=\"no-referrer\">"
 s = s.replace('<meta charset="utf-8">', '<meta charset="utf-8">' + CSP, 1)
