@@ -102,7 +102,17 @@ body.inking.ink-pen .card .ans,body.inking.ink-hl .card .ans,body.inking.ink-er 
 body.inking .card .ans{outline:1px dashed var(--line);outline-offset:-1px}
 @media print{#ink{display:none}}
 """
-s = s.replace('</style>', CSS + '</style>', 1)
+s = re.sub(r'@font-face\{font-family:"(?:Plus Jakarta Sans|Source Sans 3)".*?\}\n?', '', s)
+s = s.replace('</style>', CSS + open(os.path.join(HERE, 'theme.css'), encoding='utf8').read() + '</style>', 1)
+H1 = '<h1>Viva Prep —<br>Read.<br>Recall. Answer.</h1>'
+assert H1 in s
+s = s.replace(H1, '<p class="eyebrow">NMC viva list · Robbins 11th</p><h1>Systemic Pathology<em>Read. Recall. Answer.</em></h1>', 1)
+s = s.replace('<b>Systemic Pathology Viva Questions with Answers.</b> ', '', 1)
+STATS = '<div class="stats"><div><b>%d</b><span>Viva questions</span></div><div><b>%d</b><span>Systemic topics</span></div><div><b>NMC</b><span>Question order</span></div><div><b>11th</b><span>Robbins edition</span></div></div>' % (total, len(order))
+T = '<ul id="res"></ul></div></div></div></div><main'
+assert T in s
+s = s.replace(T, '<ul id="res"></ul></div></div></div>' + STATS + '</div><main', 1)
+s = s.replace('content="#000000" media', 'content="#0c131f" media').replace('content="#f7f4f2" media', 'content="#f7f6f2" media')
 CSP = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'\"><meta name=\"referrer\" content=\"no-referrer\">"
 s = s.replace('<meta charset="utf-8">', '<meta charset="utf-8">' + CSP, 1)
 s = s.replace("<script>\nif ('serviceWorker'", '<script src="ink.js"></script>\n<script>\nif (\'serviceWorker\'', 1)

@@ -5,7 +5,7 @@
    - Your bookmarks, notes and progress are stored by the page itself (localStorage);
      this file never touches them.
    When you upload a new version of the site, change VERSION to force a clean refresh. */
-const VERSION = 'pathviva-v3';
+const VERSION = 'pathviva-v4';
 
 const CORE = [
   'index.html',
@@ -19,18 +19,16 @@ const CORE = [
   'icons/icon-512.png',
   'icons/icon-maskable-192.png',
   'icons/icon-maskable-512.png',
-  'fonts/plus-jakarta-sans-latin-500-normal.woff2',
-  'fonts/plus-jakarta-sans-latin-600-normal.woff2',
-  'fonts/plus-jakarta-sans-latin-700-normal.woff2',
-  'fonts/plus-jakarta-sans-latin-800-normal.woff2',
-  'fonts/source-sans-3-latin-400-normal.woff2',
-  'fonts/source-sans-3-latin-500-normal.woff2',
-  'fonts/source-sans-3-latin-600-normal.woff2',
-  'fonts/source-sans-3-latin-700-normal.woff2',
-  'fonts/source-sans-3-greek-400-normal.woff2',
-  'fonts/source-sans-3-greek-500-normal.woff2',
-  'fonts/source-sans-3-greek-600-normal.woff2',
-  'fonts/source-sans-3-greek-700-normal.woff2'
+  'fonts/fraunces-latin-400-normal.woff2',
+  'fonts/fraunces-latin-500-normal.woff2',
+  'fonts/fraunces-latin-600-normal.woff2',
+  'fonts/fraunces-latin-400-italic.woff2',
+  'fonts/inter-latin-400-normal.woff2',
+  'fonts/inter-latin-500-normal.woff2',
+  'fonts/inter-latin-600-normal.woff2',
+  'fonts/inter-greek-400-normal.woff2',
+  'fonts/inter-greek-500-normal.woff2',
+  'fonts/inter-greek-600-normal.woff2'
 ];
 
 self.addEventListener('install', event => {
