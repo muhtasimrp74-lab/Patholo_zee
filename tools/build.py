@@ -101,11 +101,35 @@ const ch=document.getElementById('pchips');if(!ch)return;const secs=[...document
 function apply(){secs.forEach((x,i)=>{x.hidden=f!=='all'&&x.dataset.part!==f;const g=x.querySelector('.grid'),a=orig[i].slice();if(srt)a.sort((u,v)=>v.dataset.n-u.dataset.n||u.getAttribute('href').localeCompare(v.getAttribute('href')));a.forEach(t=>g.append(t))});ch.querySelectorAll('[data-f]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.f===f));ch.querySelector('[data-sort]').setAttribute('aria-pressed',srt)}
 ch.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.f)f=b.dataset.f;else srt=!srt;apply()}})();
 """
+
+UX_JS = r"""
+const EMPTY_UI={bm:['No bookmarks yet','<path d="M6 3h12v18l-6-4-6 4z"/>'],fav:['No favourites yet','<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'],notes:['No notes yet','<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/>']};
+function emptyHTML(k){const u=EMPTY_UI[k]||EMPTY_UI.bm;return '<div class="empty"><svg viewBox="0 0 24 24" aria-hidden="true">'+u[1]+'</svg><b>'+u[0]+'</b><p>'+EMPTY[k].replace(/^No [a-z]+ yet\. /,'')+'</p><a class="pill" href="#/topics">Browse topics</a></div>'}
+(function(){
+const RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+/* reveal on scroll (skips anything already on screen) */
+if('IntersectionObserver' in window&&!RM){document.documentElement.classList.add('js-ready');
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;io.unobserve(e.target);e.target.classList.add('in');setTimeout(()=>e.target.classList.remove('rv','in'),1000)}),{rootMargin:'0px 0px -6% 0px'});
+const seen=new Map();document.querySelectorAll('.topic,.dc,.part-h,.stats').forEach(el=>{if(el.getBoundingClientRect().top<innerHeight&&el.offsetParent)return;const p=el.parentNode,n=seen.get(p)||0;seen.set(p,n+1);el.style.setProperty('--i',Math.min(n%6,5));el.classList.add('rv');io.observe(el)})}
+/* count-up for numeric hero stats */
+document.querySelectorAll('.stats b').forEach(el=>{const v=+el.textContent;if(!v||RM)return;const t0=performance.now(),D=900;el.textContent='0';(function f(t){const k=Math.min(1,(t-t0)/D);el.textContent=Math.round(v*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f);else el.textContent=v})(t0)});
+/* topic-complete celebration */
+const toast=document.createElement('div');toast.className='toast';toast.setAttribute('role','status');toast.setAttribute('aria-live','polite');document.body.appendChild(toast);let tt;
+function say(h){toast.innerHTML='<span class="tk"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span><span>'+h+'</span>';toast.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toast.classList.remove('on'),3600)}
+function burst(){if(RM)return;const cs=['#1769e0','#2bb3d6','#0f7a4a','#f2b36b','#8fb3f2'];for(let i=0;i<26;i++){const e=document.createElement('i');e.className='cf';const a=(Math.random()*160+10)*Math.PI/180,d=120+Math.random()*180;e.style.cssText='--c:'+cs[i%5]+';--x:'+(Math.cos(a)*d*(Math.random()<.5?-1:1)).toFixed(0)+'px;--y:'+(-Math.sin(a)*d).toFixed(0)+'px;--r:'+((Math.random()*720-360)|0)+'deg';document.body.appendChild(e);setTimeout(()=>e.remove(),1400)}}
+const NAME={},TOT={};DATA.forEach(d=>{NAME[d[2]]=d[4];TOT[d[2]]=(TOT[d[2]]||0)+1});
+function done(){const L=new Set(S.learned),c={};DATA.forEach(d=>{if(L.has(d[3]))c[d[2]]=(c[d[2]]||0)+1});return new Set(Object.keys(TOT).filter(t=>c[t]===TOT[t]))}
+let prev=null;const p0=prog;prog=function(){p0();const now=done();if(prev){const fresh=[...now].filter(t=>!prev.has(t));if(fresh.length){burst();say(now.size===Object.keys(TOT).length?'<b>Every topic complete.</b> Outstanding work.':'<b>Topic complete</b><br>'+NAME[fresh[0]])}}prev=now};prog();
+})();
+"""
 MARK = "document.querySelector('#v-home main').insertAdjacentHTML('afterbegin','<div id=\"dash\"></div>');"
 assert MARK in s
 s = s.replace(MARK, MARK + QUESTIONS_JS, 1)
+OLD_EMPTY = '<p class="none" style="display:block">${EMPTY[k]}</p>'
+assert OLD_EMPTY in s
+s = s.replace(OLD_EMPTY, '${emptyHTML(k)}', 1)
 i = s.index('const DATA='); j = s.index('</script>', i)
-s = s[:j] + '\n' + PART_JS + s[j:]
+s = s[:j] + '\n' + PART_JS + UX_JS + s[j:]
 open(os.path.join(HERE, '_stage.html'), 'w', encoding='utf8').write(s)
 print('questions', base_n, '->', total, 'topics', len(order))
 
@@ -146,6 +170,32 @@ CSP = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'
 s = s.replace('<meta charset="utf-8">', '<meta charset="utf-8">' + CSP, 1)
 s = s.replace("<script>\nif ('serviceWorker'", '<script src="ink.js"></script>\n<script>\nif (\'serviceWorker\'', 1)
 assert 'src="ink.js"' in s and 'Content-Security-Policy' in s
+
+# fix: counts() also matched dashboard elements with data-c="0".."3" and threw on S["0"].length
+_C_OLD = "document.querySelectorAll('[data-c]').forEach(e=>{const k=e.dataset.c;"
+assert _C_OLD in s
+s = s.replace(_C_OLD, "document.querySelectorAll('[data-c=bm],[data-c=fav],[data-c=notes]').forEach(e=>{const k=e.dataset.c;", 1)
+# the page's own JS rewrites every .logo's innerHTML at load; keep the wordmark through that
+s, _n = re.subn(r"(\.logo'\)\.forEach\(l=>l\.innerHTML='<svg.*?</svg>)'", lambda m: m.group(1) + '<span class="wm">Patho<i>Viva</i></span>\'', s, count=1, flags=re.S)
+assert _n == 1
+# ---- premium polish: wordmark, trust line, social meta
+s, nlogo = re.subn(r'(<a class="logo"[^>]*>.*?</svg>)</a>', lambda m: m.group(1) + '<span class="wm">Patho<i>Viva</i></span></a>', s, flags=re.S)
+assert nlogo >= 1
+TR_OLD = 'Blood Vessels</a></div></div><div class="phones">'
+assert TR_OLD in s
+s = s.replace(TR_OLD, 'Blood Vessels</a></div><p class="trust"><span>Works offline</span><span>Private, stays on your device</span><span>No sign-up</span></p></div><div class="phones">', 1)
+SITE = 'https://muhtasimrp74-lab.github.io/Patholo_zee/'
+DESC = '%d systemic pathology viva questions with answers, in NMC order (Robbins 11th). Practice mode, bookmarks, notes and handwriting. Works offline.' % total
+META = ('<meta name="description" content="%s"><link rel="canonical" href="%s">'
+ '<meta property="og:type" content="website"><meta property="og:site_name" content="Patho Viva">'
+ '<meta property="og:title" content="Patho Viva: Systemic Pathology Viva Questions"><meta property="og:description" content="%s">'
+ '<meta property="og:url" content="%s"><meta property="og:image" content="%sicons/og-image.png">'
+ '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'
+ '<meta property="og:image:alt" content="Patho Viva. Systemic Pathology. Read. Recall. Answer.">'
+ '<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Patho Viva: Systemic Pathology Viva Questions">'
+ '<meta name="twitter:description" content="%s"><meta name="twitter:image" content="%sicons/og-image.png">') % (DESC, SITE, DESC, SITE, SITE, DESC, SITE)
+s = s.replace('<meta name="referrer" content="no-referrer">', '<meta name="referrer" content="no-referrer">' + META, 1)
+assert 'og:image' in s
 open(os.path.join(HERE, '..', 'index.html'), 'w', encoding='utf8').write(s)
 os.remove(os.path.join(HERE, '_stage.html'))
 print('wrote index.html', len(s))
