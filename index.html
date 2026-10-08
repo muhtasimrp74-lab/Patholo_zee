@@ -281,10 +281,10 @@ footer{color:var(--muted)}
 
 /* ===== unified content width + tablet (Redmi Pad Pro) layout + bottom home bar ===== */
 :root{--w:1120px;--gut:20px}
-.nav{padding-left:max(var(--gut),calc((100vw - var(--w))/2));padding-right:max(var(--gut),calc((100vw - var(--w))/2))}
+.nav{padding-left:calc(max(0px,(100vw - var(--w))/2) + var(--gut));padding-right:calc(max(0px,(100vw - var(--w))/2) + var(--gut))}
 .hero-in,.stats,.bar-in,.chips,main,main.wide{max-width:var(--w);margin-left:auto;margin-right:auto}
 .hero-in{padding-left:var(--gut);padding-right:var(--gut)}
-.stats{width:calc(100% - 2*var(--gut))}
+.stats{width:calc(100% - 2*var(--gut));max-width:calc(var(--w) - 2*var(--gut))}
 .bar-in,.chips{padding-left:var(--gut);padding-right:var(--gut)}
 main,main.wide{padding-left:var(--gut);padding-right:var(--gut)}
 .bar-in{width:100%}
@@ -446,6 +446,34 @@ a,button,.topic,.card header,.qi-h,.qs-h{-webkit-tap-highlight-color:transparent
  h2,h3,h4{break-after:avoid}.ans table{break-inside:avoid}
  a{color:inherit;text-decoration:none}
 }
+
+/* ===== Tablet width alignment, calmer card edges, compact action buttons ===== */
+/* One gutter drives every block, so title, search bar, cards and nav share the same left edge */
+:root{--w:1180px}
+@media(min-width:641px){:root{--gut:clamp(24px,3.4vw,40px)}}
+.nav,.hero-in,.hero.small .hero-in,.bar-in,.chips,main,main.wide{padding-left:max(var(--gut),env(safe-area-inset-left,0px));padding-right:max(var(--gut),env(safe-area-inset-right,0px))}
+.nav{padding-left:calc(max(0px,(100vw - var(--w))/2) + var(--gut));padding-right:calc(max(0px,(100vw - var(--w))/2) + var(--gut))}
+.hero-in,.stats,.bar-in,.chips,main,main.wide{max-width:var(--w)}
+.stats{width:calc(100% - 2*var(--gut));max-width:calc(var(--w) - 2*var(--gut))}
+@media(max-width:860px){.nav{padding-left:var(--gut);padding-right:var(--gut)}}
+@media(min-width:641px) and (max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.nav{padding-left:var(--gut);padding-right:var(--gut)}}
+
+/* Question cards: one soft hairline all round, no heavy left bar */
+.card,.qi{border:1px solid var(--line);border-left:1px solid var(--line);border-radius:14px}
+.card:hover,.qi:hover{border-color:var(--line2);border-left-color:var(--line2)}
+.card:target,.card.hl,.qi.o{border-color:color-mix(in srgb,var(--blue) 38%,var(--line));border-left-color:color-mix(in srgb,var(--blue) 38%,var(--line));box-shadow:var(--sh2),var(--hi)}
+.qi.dn{border-color:color-mix(in srgb,var(--ok) 40%,var(--line));border-left-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.card header{border-radius:14px 14px 0 0}
+.ans{border-top:1px solid var(--line)}
+.card:not(.open) .ans{border-top:0}
+
+/* Action buttons: compact, content-sized, left aligned */
+.acts{display:flex;flex-wrap:wrap;grid-template-columns:none;gap:6px;padding:2px 20px 14px}
+.act{width:auto;height:34px;padding:0 12px;gap:6px;font-size:.8rem;font-weight:500;border-radius:999px;flex-direction:row}
+.act svg{width:15px;height:15px}
+@media(min-width:641px) and (max-width:1000px){.acts{display:flex;grid-template-columns:none;padding:2px 22px 14px}.act{height:34px;font-size:.8rem}}
+@media(max-width:640px){.acts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:0 10px 12px}.act{height:46px;flex-direction:column;gap:3px;padding:0 2px;border-radius:12px;font-size:10.5px}.act svg{width:18px;height:18px}}
+@media(pointer:coarse){.act{min-height:0}.qlearn{height:36px;min-height:0}}
 </style><link rel="icon" type="image/svg+xml" href="icons/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png"><link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png"><script>try{const p=JSON.parse(localStorage.vivaState||'{}').pref||{};if(p.theme)document.documentElement.dataset.theme=p.theme}catch(e){}</script><link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0c131f" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f7f6f2" media="(prefers-color-scheme: light)">
