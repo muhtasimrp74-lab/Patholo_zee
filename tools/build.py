@@ -74,11 +74,36 @@ s = s.replace("function imp(f){if(!f)return;f.text().then(t=>{try{const o=JSON.p
  "function imp(f){if(!f)return;f.text().then(async t=>{let o;try{o=JSON.parse(t);if(!o||!Array.isArray(o.bm))throw 0}catch(e){alert('That file is not a valid backup.');return}const ink=o.ink;delete o.ink;Object.assign(S,o);save();if(ink&&typeof Ink!=='undefined')await Ink.load(ink);location.reload()})}", 1)
 assert 'Ink.load' in s and 'Ink.dump' in s and 'localeCompare(b))' in s
 
+
+QUESTIONS_JS = r"""
+const QV=mkView('questions','Questions','Questions','Only the questions. Tap one to reveal its answer, tap again to hide it.');
+(function(){const g={};DATA.forEach(d=>(g[d[2]]=g[d[2]]||[]).push(d));
+const chev='<svg class="chv" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+QV.innerHTML='<div class="qtools"><input id="qfilter" type="search" placeholder="Filter questions…" aria-label="Filter questions"><button class="qb" id="qexp" type="button">Expand all</button><button class="qb" id="qcol" type="button">Collapse all</button></div><p class="none" id="qnone">No question matches.</p>'
++Object.keys(g).sort().map(t=>`<section class="qs" data-t="${t}"><button class="qs-h" type="button" aria-expanded="true"><span class="no">${t}</span><b>${esc(g[t][0][4])}</b><span class="cnt">${g[t].length}</span>${chev}</button><div class="qs-b">`+g[t].map(d=>`<div class="qi" data-id="${d[3]}" data-s="${esc((d[1]+' '+d[4]+' '+d[0]).toLowerCase())}"><button class="qi-h" type="button" aria-expanded="false"><span class="code">${d[0]}</span><span class="qt">${esc(d[1])}</span>${chev}</button><div class="qi-a" hidden></div></div>`).join('')+'</div></section>').join('');
+function fill(i){const a=i.querySelector('.qi-a');if(a.dataset.f)return;a.dataset.f=1;const id=i.dataset.id,c=document.getElementById(id),d=BY[id];
+a.innerHTML='<div class="ans">'+c.querySelector('.ans').innerHTML+'</div><div class="qa-f"><button class="qlearn" type="button"></button><a href="#/'+d[2]+'/'+id+'">Open in topic page</a></div>';
+a.querySelectorAll('canvas').forEach(x=>x.remove());lbl(i)}
+function lbl(i){const on=S.learned.includes(i.dataset.id),b=i.querySelector('.qlearn');i.classList.toggle('dn',on);if(b){b.setAttribute('aria-pressed',on);b.textContent=on?'Learned ✓':'Mark as learned'}}
+function set(i,open){fill(i);i.querySelector('.qi-h').setAttribute('aria-expanded',open);i.querySelector('.qi-a').hidden=!open;i.classList.toggle('o',open)}
+QV.querySelectorAll('.qi').forEach(lbl);
+QV.addEventListener('click',e=>{const h=e.target.closest('.qi-h');if(h){const i=h.parentNode;set(i,h.getAttribute('aria-expanded')!=='true');return}
+const s=e.target.closest('.qs-h');if(s){const o=s.getAttribute('aria-expanded')!=='true';s.setAttribute('aria-expanded',o);s.nextElementSibling.hidden=!o;return}
+const b=e.target.closest('.qlearn');if(b){const i=b.closest('.qi'),id=i.dataset.id,k=S.learned.indexOf(id);k<0?(S.learned.push(id),touch()):S.learned.splice(k,1);save();lbl(i);const c=document.getElementById(id);if(c)paint(c);counts()}});
+document.getElementById('qexp').onclick=()=>{QV.querySelectorAll('.qs-h').forEach(s=>{s.setAttribute('aria-expanded',true);s.nextElementSibling.hidden=false});QV.querySelectorAll('.qi:not([hidden])').forEach(i=>set(i,true))};
+document.getElementById('qcol').onclick=()=>QV.querySelectorAll('.qi').forEach(i=>set(i,false));
+document.getElementById('qfilter').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();let n=0;QV.querySelectorAll('.qs').forEach(s=>{let v=0;s.querySelectorAll('.qi').forEach(i=>{const c=document.getElementById(i.dataset.id),h=q&&!(c&&c._t?c._t:i.dataset.s).includes(q);i.hidden=h;if(!h)v++});s.hidden=!v;n+=v;if(q&&v){s.querySelector('.qs-h').setAttribute('aria-expanded',true);s.querySelector('.qs-b').hidden=false}});document.getElementById('qnone').style.display=n?'none':'block'});
+})();
+"""
+
 PART_JS = "const PART_OF=%s;\n" % json.dumps(PART_OF) + r"""(function(){const p=prog;prog=function(){p();const L=new Set(S.learned),T={},N={};DATA.forEach(d=>{const k=PART_OF[d[2]];N[k]=(N[k]||0)+1;if(L.has(d[3]))T[k]=(T[k]||0)+1});document.querySelectorAll('[data-pp]').forEach(r=>{const k=r.dataset.pp,c=Math.round(100*(T[k]||0)/N[k]);r.style.setProperty('--p',c);r.textContent=c+'%'})};prog();
 const ch=document.getElementById('pchips');if(!ch)return;const secs=[...document.querySelectorAll('section.part')],orig=secs.map(x=>[...x.querySelectorAll('.topic')]);let f='all',srt=false;
 function apply(){secs.forEach((x,i)=>{x.hidden=f!=='all'&&x.dataset.part!==f;const g=x.querySelector('.grid'),a=orig[i].slice();if(srt)a.sort((u,v)=>v.dataset.n-u.dataset.n||u.getAttribute('href').localeCompare(v.getAttribute('href')));a.forEach(t=>g.append(t))});ch.querySelectorAll('[data-f]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.f===f));ch.querySelector('[data-sort]').setAttribute('aria-pressed',srt)}
 ch.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.f)f=b.dataset.f;else srt=!srt;apply()}})();
 """
+MARK = "document.querySelector('#v-home main').insertAdjacentHTML('afterbegin','<div id=\"dash\"></div>');"
+assert MARK in s
+s = s.replace(MARK, MARK + QUESTIONS_JS, 1)
 i = s.index('const DATA='); j = s.index('</script>', i)
 s = s[:j] + '\n' + PART_JS + s[j:]
 open(os.path.join(HERE, '_stage.html'), 'w', encoding='utf8').write(s)
@@ -106,6 +131,7 @@ s = re.sub(r'@font-face\{font-family:"(?:Plus Jakarta Sans|Source Sans 3)".*?\}\
 s = s.replace('</style>', CSS + open(os.path.join(HERE, 'theme.css'), encoding='utf8').read() + '</style>', 1)
 H1 = '<h1>Viva Prep —<br>Read.<br>Recall. Answer.</h1>'
 assert H1 in s
+s = s.replace('<a href="#/topics">Topics</a>', '<a href="#/topics">Topics</a><a href="#/questions">Questions</a>')
 s = s.replace(H1, '<p class="eyebrow">NMC viva list · Robbins 11th</p><h1>Systemic Pathology<em>Read. Recall. Answer.</em></h1>', 1)
 s = s.replace('<b>Systemic Pathology Viva Questions with Answers.</b> ', '', 1)
 STATS = '<div class="stats"><div><b>%d</b><span>Viva questions</span></div><div><b>%d</b><span>Systemic topics</span></div><div><b>NMC</b><span>Question order</span></div><div><b>11th</b><span>Robbins edition</span></div></div>' % (total, len(order))
@@ -114,7 +140,7 @@ assert T in s
 s = s.replace(T, '<ul id="res"></ul></div></div></div>' + STATS + '</div><main', 1)
 NAV_OLD = re.search(r'<nav id="bnav">.*?</nav>', s, re.S)
 assert NAV_OLD
-s = s.replace(NAV_OLD.group(), '<nav id="bnav" aria-label="Main"><a href="#/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>Home</a><a href="#/topics"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h16"/></svg>Topics</a><a href="#/search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search</a><a href="#/practice"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>Practice</a><a href="#/bookmarks"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Bookmarks</a><a href="#/notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/></svg>Notes</a></nav>', 1)
+s = s.replace(NAV_OLD.group(), '<nav id="bnav" aria-label="Main"><a href="#/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>Home</a><a href="#/topics"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h16"/></svg>Topics</a><a href="#/questions"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01"/></svg>Questions</a><a href="#/practice"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>Practice</a><a href="#/bookmarks"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Bookmarks</a><a href="#/notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/></svg>Notes</a></nav>', 1)
 s = s.replace('content="#000000" media', 'content="#0c131f" media').replace('content="#f7f4f2" media', 'content="#f7f6f2" media')
 CSP = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'\"><meta name=\"referrer\" content=\"no-referrer\">"
 s = s.replace('<meta charset="utf-8">', '<meta charset="utf-8">' + CSP, 1)
