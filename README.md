@@ -1,6 +1,6 @@
 # Pathology Viva Questions with Answers
 
-Offline-capable study site: **223 viva questions** in three parts — A General Pathology (GP), B Haematology (HM), C Systemic Pathology (original 189, NMC order, Robbins 11th).
+Offline-capable study site: **189 Systemic Pathology viva questions** (NMC order, Robbins 11th).
 
 Features: search, practice (spaced-repetition flashcards and timed viva), quiz mode, bookmarks, favourites, notes, learned-progress per topic and per part, focus mode, dark/light theme, text size, handwriting ink (pen, highlighter, eraser, lasso) on every answer, backup/restore of all your data (including ink), installable and works offline.
 
@@ -15,4 +15,4 @@ Your data stays on your device (localStorage + IndexedDB). Nothing is sent anywh
 Netlify also works: import the repo, no build command, publish directory `.` (`_headers` adds security headers).
 
 ## Editing content
-Original 15 topics live in `tools/src/index.base.html`; General Pathology and Haematology are in `tools/content.py`. After editing, run `python3 tools/build.py` to regenerate `index.html`. When you change any site file, bump `VERSION` in `sw.js` so installed copies refresh.
+The 15 systemic topics live in `tools/src/index.base.html` (`tools/content.py` is empty; add extra topics there if needed). After editing, run `python3 tools/build.py` to regenerate `index.html`. When you change any site file, bump `VERSION` in `sw.js` so installed copies refresh.

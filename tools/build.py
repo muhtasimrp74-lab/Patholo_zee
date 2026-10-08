@@ -3,11 +3,10 @@
 import re, json, html, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import content
+content.TOPICS = []  # systemic-only edition: General Pathology / Haematology removed
 s = open(os.path.join(HERE, 'src/index.base.html'), encoding='utf8').read()
 
-PARTS = [('A', 'General Pathology', 'gen', ['16','17','18','19','20']),
-         ('B', 'Haematology', 'haem', ['21','22','23']),
-         ('C', 'Systemic Pathology', 'sys', ['%02d' % i for i in range(1, 16)])]
+PARTS = [('C', 'Systemic Pathology', 'sys', ['%02d' % i for i in range(1, 16)])]
 PART_OF = {t: p[2] for p in PARTS for t in p[3]}
 e = lambda t: html.escape(t, quote=False)
 
@@ -63,14 +62,11 @@ def card(tid):
 secs = ''
 for letter, pname, key, tids in PARTS:
     cs = [card(t) for t in tids]
-    secs += '<section class="part" data-part="%s"><div class="part-h"><h3>Part %s · %s</h3><span class="mu">%d topics · %d questions</span><span class="ring pp" data-pp="%s"></span></div><div class="grid">%s</div></section>' % (key, letter, pname, len(tids), sum(qn(c) for c in cs), key, ''.join(cs))
+    secs += '<section class="part" data-part="%s"><div class="part-h"><h3>%s</h3><span class="mu">%d topics · %d questions</span><span class="ring pp" data-pp="%s"></span></div><div class="grid">%s</div></section>' % (key, pname, len(tids), sum(qn(c) for c in cs), key, ''.join(cs))
 chips = '<div class="chips" id="pchips" role="group" aria-label="Filter by part"><button aria-pressed="true" data-f="all">All parts</button>' + ''.join('<button aria-pressed="false" data-f="%s">%s</button>' % (p[2], p[1]) for p in PARTS) + '<span class="sp"></span><button aria-pressed="false" data-sort="n">Sort: most questions</button></div>'
-s = s.replace(old_grid, '<h2 id="topics">Topics<small>%d questions</small></h2>%s%s' % (total, chips, secs), 1)
+s = s.replace(old_grid, '<h2 id="topics">Topics<small>%d questions</small></h2>%s' % (total, secs), 1)
 
 s = s.replace('<small>Browse</small>15 topics', '<small>Browse</small>%d topics' % len(order))
-s = s.replace('Systemic Pathology Viva Questions with Answers.</b> Arranged', 'Pathology Viva Questions with Answers.</b> Arranged')
-s = s.replace('not found in Robbins 11th.', 'not found in Robbins 11th. Part A (General Pathology, code GP) and Part B (Haematology, code HM) are added in the same format; Part C is the original systemic list.', 1)
-s = s.replace('Systemic Pathology Viva', 'Pathology Viva')
 
 s = s.replace("sort((a,b)=>a.slice(1)-b.slice(1))", "sort((a,b)=>(a.slice(1)-b.slice(1))||a.localeCompare(b))", 1)
 s = s.replace("new Blob([JSON.stringify(S,null,1)]", "new Blob([JSON.stringify(Object.assign({},S,{ink:(typeof Ink!=='undefined'?Ink.dump():{})}),null,1)]", 1)
