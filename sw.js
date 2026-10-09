@@ -5,7 +5,7 @@
    - Your bookmarks, notes and progress are stored by the page itself (localStorage);
      this file never touches them.
    When you upload a new version of the site, change VERSION to force a clean refresh. */
-const VERSION = 'pathviva-v12';
+const VERSION = 'pathviva-v13';
 
 const CORE = [
   'index.html',
@@ -50,6 +50,7 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.endsWith('/manifest.json') || url.pathname.endsWith('/sw.js')) return;
 
   const isPage = req.mode === 'navigate';
   const key = isPage ? 'index.html' : req;

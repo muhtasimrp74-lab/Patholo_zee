@@ -3,7 +3,7 @@
   "short_name": "Patholo_zee",
   "description": "Pathology viva questions with answers: practice mode, bookmarks, notes and handwriting. Works offline.",
   "id": "/Patholo_zee/?v=2",
-"start_url": "/Patholo_zee/",
+"start_url": "/Patholo_zee/?source=pwa",
 "scope": "/Patholo_zee/",
   "display": "standalone",
   "background_color": "#f7f6f2",
