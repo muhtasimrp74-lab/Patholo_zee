@@ -29,7 +29,7 @@ h1,h2,h3,h4{color:var(--navy);font-family:var(--disp)}
 .nav{position:sticky;top:0;z-index:30;gap:20px;height:60px;padding:env(safe-area-inset-top,0) max(20px,calc((100vw - 1280px)/2)) 0;background:var(--frost);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
 .logo{width:auto;height:auto;border-radius:0;background:none;transform:none;display:flex;align-items:center;gap:10px;font:600 1.15rem var(--disp);color:var(--navy)}
 .logo svg{width:30px;height:30px;padding:6px;border-radius:8px;background:var(--mark);transform:none;stroke:#fff;flex:none}
-.logo::after{content:"Patho Viva";white-space:nowrap}
+.logo::after{content:"Patholo_zee";white-space:nowrap}
 .nav .links{margin:0 auto 0 8px;gap:2px;height:100%;font-size:.9rem}
 .nav .links a{display:flex;align-items:center;gap:6px;padding:0 12px;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;text-decoration:none}
 .nav .links a:hover{color:var(--navy);text-decoration:none}
@@ -451,3 +451,7 @@ h2,h3.sub,.part-h,.dc,.pc{margin-left:0;margin-right:0}
  body.qf-open #qf{box-shadow:0 0 60px rgba(11,31,58,.3);visibility:visible;transition:transform .3s var(--ease),visibility 0s}
 }
 #pchips{padding-left:0;padding-right:0;max-width:none}
+/* nav: links never wrap; tighter spacing where the wordmark leaves less room */
+.nav .links a{white-space:nowrap}
+@media(min-width:1001px) and (max-width:1340px){.nav .links a{padding:0 8px}.nav .links{margin-left:0}}
+@media(min-width:1001px) and (max-width:1120px){.nav .links a{padding:0 6px;font-size:.84rem}}

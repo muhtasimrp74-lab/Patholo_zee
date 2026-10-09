@@ -1,4 +1,4 @@
-# Pathology Viva Questions with Answers
+# Patholo_zee
 
 Offline-capable study site: **189 Systemic Pathology viva questions** (NMC order, Robbins 11th).
 

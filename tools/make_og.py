@@ -25,7 +25,7 @@ pts = [(2, 9), (6, 9), (11, 20), (15, 4), (17, 9), (22, 9)]
 sc = 1.9; ox, oy = 80 + 30 - 12 * sc, 74 + 30 - 12 * sc
 d.line([(ox + x * sc, oy + y * sc) for x, y in pts], fill='white', width=4, joint='curve')
 f_wm = font('fraunces-latin-500-normal.woff2', 40); f_wi = font('fraunces-latin-400-italic.woff2', 40)
-d.text((160, 76), 'Patho', font=f_wm, fill='white'); d.text((160 + d.textlength('Patho', font=f_wm) + 6, 76), 'Viva', font=f_wi, fill=(143, 179, 242))
+d.text((160, 76), 'Patholo', font=f_wm, fill='white'); d.text((160 + d.textlength('Patholo', font=f_wm) + 2, 76), '_zee', font=f_wi, fill=(143, 179, 242))
 # headline
 d.text((80, 232), 'Systemic', font=font('fraunces-latin-500-normal.woff2', 128), fill='white')
 d.text((80, 352), 'Pathology', font=font('fraunces-latin-500-normal.woff2', 128), fill='white')
