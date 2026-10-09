@@ -3,10 +3,13 @@
 import re, json, html, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import content
-content.TOPICS = []  # systemic-only edition: General Pathology / Haematology removed
 s = open(os.path.join(HERE, 'src/index.base.html'), encoding='utf8').read()
 
-PARTS = [('C', 'Systemic Pathology', 'sys', ['%02d' % i for i in range(1, 16)])]
+# Parts, in book order. General Pathology and Haematology are filled from content.TOPICS (see content.py);
+# while a part has no topics the site shows a tidy "coming soon" panel for it.
+SYS = ['%02d' % i for i in range(1, 16)]
+PART_DEFS = [('A', 'General Pathology', 'gp'), ('B', 'Haematology', 'hm'), ('C', 'Systemic Pathology', 'sys')]
+PARTS = [(L, N, K, SYS if K == 'sys' else [t[0] for t in content.TOPICS if t[2] == K]) for L, N, K in PART_DEFS]
 PART_OF = {t: p[2] for p in PARTS for t in p[3]}
 e = lambda t: html.escape(t, quote=False)
 
@@ -16,17 +19,19 @@ names = {k: re.search(r'<h3>(.*?)</h3>', v).group(1) for k, v in old_cards.items
 short = dict(re.findall(r'<option value="(\d\d)"[^>]*>\d\d  (.*?)</option>', re.search(r'<select class="jump".*?</select>', s, re.S).group()))
 
 n = len(re.findall(r'id="q\d+"', s)); base_n = n
-new_data, new_views = [], {}
+new_data, new_views, written = [], {}, {}
 for tid, tname, part, qs in content.TOPICS:
     names[tid] = e(tname); short[tid] = e(tname)
     arts = []
-    for code, q, ans in qs:
+    for item in qs:
+        code, q, ans = item[:3]
         n += 1
+        if len(item) > 3 and item[3] == 'W': written['q%d' % n] = 'W'
         new_data.append([code, q, tid, 'q%d' % n, tname])
         arts.append('<article class="card" id="q%d"><header tabindex="0"><span class="code">%s</span><h4>%s</h4></header><div class="ans">%s</div></article>' % (n, code, e(q), ans))
     new_views[tid] = (qs, ''.join(arts))
 total = n
-order = sorted(names)
+order = [t for p in PARTS for t in p[3]]  # book order: Part A, B, C
 
 def jump(cur):
     return '<select class="jump" aria-label="Jump to topic">' + ''.join('<option value="%s"%s>%s  %s</option>' % (t, ' selected' if t == cur else '', t, short[t]) for t in order) + '</select>'
@@ -35,19 +40,20 @@ v01 = re.search(r'<div class="view" id="v-01".*?(?=<div class="view" id="v-02")'
 head = v01[:v01.index('<main>')]
 def pager(tid):
     i = order.index(tid)
-    prev = '<a href="#/%s"><small>Previous</small>%s</a>' % (order[i-1], names[order[i-1]]) if i else '<span></span>'
-    nxt = '<a class="nx" href="#/%s"><small>Next</small>%s</a>' % (order[i+1], names[order[i+1]]) if i < len(order)-1 else '<a class="nx" href="#/"><small>Finished</small>Back to all topics</a>'
+    prev = '<a href="#/%s"><small>Previous</small>%s</a>' % (order[i-1], short[order[i-1]]) if i else '<span></span>'
+    nxt = '<a class="nx" href="#/%s"><small>Next</small>%s</a>' % (order[i+1], short[order[i+1]]) if i < len(order)-1 else '<a class="nx" href="#/"><small>Finished</small>Back to all topics</a>'
     return '<div class="pager">%s%s</div>' % (prev, nxt)
 
 views = ''
-for tid in order[15:]:
+for tid in [t for t in order if t not in old_cards]:
     qs, arts = new_views[tid]
     pl = [p for p in PARTS if tid in p[3]][0]
     h = head.replace('id="v-01"', 'id="v-%s"' % tid).replace('Blood Vessels | Systemic Pathology Viva', '%s | Pathology Viva' % names[tid])
     h = h.replace('All topics</a> / 01', 'All topics</a> / %s' % tid).replace('<h1>Blood Vessels</h1>', '<h1>%s</h1>' % names[tid])
     h = h.replace('6 questions, in the same order as the NMC viva list.', '%d questions · Part %s, %s.' % (len(qs), pl[0], pl[1]))
     views += h + '<main>' + arts + '<p class="none">No question matches your search.</p>' + pager(tid) + '</main></div>'
-s = re.sub(r'(id="v-15".*?)<div class="pager">.*?</div>', lambda m: m.group(1) + pager('15'), s, count=1, flags=re.S)
+for _t in old_cards:  # prev/next links of the original topics follow the full book order
+    s = re.sub(r'(id="v-%s".*?)<div class="pager">.*?</div>' % _t, lambda m, _t=_t: m.group(1) + pager(_t), s, count=1, flags=re.S)
 s = s.replace('<div class="view" id="v-bookmarks"', views + '<div class="view" id="v-bookmarks"', 1)
 s = re.sub(r'<select class="jump".*?</select>', lambda m: jump(re.search(r'<option value="(\d\d)" selected', m.group()).group(1)), s, flags=re.S)
 s = s.replace('"Histopathology Practical"]];', '"Histopathology Practical"]' + ''.join(', ' + json.dumps(d, ensure_ascii=False) for d in new_data) + '];', 1)
@@ -60,11 +66,14 @@ def card(tid):
         c = '<a class="topic" href="#/%s"><span class="no">%s</span><h3>%s</h3><p>%s</p><span class="cnt">%d questions</span></a>' % (tid, tid, names[tid], e('; '.join(q[1][:50] + ('…' if len(q[1]) > 50 else '') for q in qs[:2])), len(qs))
     return c.replace('<a class="topic"', '<a class="topic" data-n="%d"' % qn(c), 1)
 secs = ''
-for letter, pname, key, tids in PARTS:
+for letter, pname, key, tids in sorted(PARTS, key=lambda p: not p[3]):  # parts that have questions first; empty ones follow
+    if not tids:
+        secs += '<section class="part part-empty" data-part="%s"><div class="part-h"><h3>%s</h3><span class="mu">Part %s</span></div><div class="soon"><b>Questions coming soon</b><p>This section is set up and ready. Its topics and questions will appear here as they are added.</p></div></section>' % (key, pname, letter)
+        continue
     cs = [card(t) for t in tids]
     secs += '<section class="part" data-part="%s"><div class="part-h"><h3>%s</h3><span class="mu">%d topics · %d questions</span><span class="ring pp" data-pp="%s"></span></div><div class="grid">%s</div></section>' % (key, pname, len(tids), sum(qn(c) for c in cs), key, ''.join(cs))
 chips = '<div class="chips" id="pchips" role="group" aria-label="Filter by part"><button aria-pressed="true" data-f="all">All parts</button>' + ''.join('<button aria-pressed="false" data-f="%s">%s</button>' % (p[2], p[1]) for p in PARTS) + '<span class="sp"></span><button aria-pressed="false" data-sort="n">Sort: most questions</button></div>'
-s = s.replace(old_grid, '<h2 id="topics">Topics<small>%d questions</small></h2>%s' % (total, secs), 1)
+s = s.replace(old_grid, '<h2 id="topics">Topics<small>%d questions</small></h2>%s%s' % (total, chips, secs), 1)
 
 s = s.replace('<small>Browse</small>15 topics', '<small>Browse</small>%d topics' % len(order))
 
@@ -75,34 +84,18 @@ s = s.replace("function imp(f){if(!f)return;f.text().then(t=>{try{const o=JSON.p
 assert 'Ink.load' in s and 'Ink.dump' in s and 'localeCompare(b))' in s
 
 
-QUESTIONS_JS = r"""
-const QV=mkView('questions','Questions','Questions','Only the questions. Tap one to reveal its answer, tap again to hide it.');
-(function(){const g={};DATA.forEach(d=>(g[d[2]]=g[d[2]]||[]).push(d));
-const chev='<svg class="chv" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
-QV.innerHTML='<div class="qtools"><input id="qfilter" type="search" placeholder="Filter questions…" aria-label="Filter questions"><button class="qb" id="qexp" type="button">Expand all</button><button class="qb" id="qcol" type="button">Collapse all</button></div><p class="none" id="qnone">No question matches.</p>'
-+Object.keys(g).sort().map(t=>`<section class="qs" data-t="${t}"><button class="qs-h" type="button" aria-expanded="true"><span class="no">${t}</span><b>${esc(g[t][0][4])}</b><span class="cnt">${g[t].length}</span>${chev}</button><div class="qs-b">`+g[t].map(d=>`<div class="qi" data-id="${d[3]}" data-s="${esc((d[1]+' '+d[4]+' '+d[0]).toLowerCase())}"><button class="qi-h" type="button" aria-expanded="false"><span class="code">${d[0]}</span><span class="qt">${esc(d[1])}</span>${chev}</button><div class="qi-a" hidden></div></div>`).join('')+'</div></section>').join('');
-function fill(i){const a=i.querySelector('.qi-a');if(a.dataset.f)return;a.dataset.f=1;const id=i.dataset.id,c=document.getElementById(id),d=BY[id];
-a.innerHTML='<div class="ans">'+c.querySelector('.ans').innerHTML+'</div><div class="qa-f"><button class="qlearn" type="button"></button><a href="#/'+d[2]+'/'+id+'">Open in topic page</a></div>';
-a.querySelectorAll('canvas').forEach(x=>x.remove());lbl(i)}
-function lbl(i){const on=S.learned.includes(i.dataset.id),b=i.querySelector('.qlearn');i.classList.toggle('dn',on);if(b){b.setAttribute('aria-pressed',on);b.textContent=on?'Learned ✓':'Mark as learned'}}
-function set(i,open){fill(i);i.querySelector('.qi-h').setAttribute('aria-expanded',open);i.querySelector('.qi-a').hidden=!open;i.classList.toggle('o',open)}
-QV.querySelectorAll('.qi').forEach(lbl);
-QV.addEventListener('click',e=>{const h=e.target.closest('.qi-h');if(h){const i=h.parentNode;set(i,h.getAttribute('aria-expanded')!=='true');return}
-const s=e.target.closest('.qs-h');if(s){const o=s.getAttribute('aria-expanded')!=='true';s.setAttribute('aria-expanded',o);s.nextElementSibling.hidden=!o;return}
-const b=e.target.closest('.qlearn');if(b){const i=b.closest('.qi'),id=i.dataset.id,k=S.learned.indexOf(id);k<0?(S.learned.push(id),touch()):S.learned.splice(k,1);save();lbl(i);const c=document.getElementById(id);if(c)paint(c);counts()}});
-document.getElementById('qexp').onclick=()=>{QV.querySelectorAll('.qs-h').forEach(s=>{s.setAttribute('aria-expanded',true);s.nextElementSibling.hidden=false});QV.querySelectorAll('.qi:not([hidden])').forEach(i=>set(i,true))};
-document.getElementById('qcol').onclick=()=>QV.querySelectorAll('.qi').forEach(i=>set(i,false));
-document.getElementById('qfilter').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();let n=0;QV.querySelectorAll('.qs').forEach(s=>{let v=0;s.querySelectorAll('.qi').forEach(i=>{const c=document.getElementById(i.dataset.id),h=q&&!(c&&c._t?c._t:i.dataset.s).includes(q);i.hidden=h;if(!h)v++});s.hidden=!v;n+=v;if(q&&v){s.querySelector('.qs-h').setAttribute('aria-expanded',true);s.querySelector('.qs-b').hidden=false}});document.getElementById('qnone').style.display=n?'none':'block'});
-})();
-"""
+QMETA = {'parts': [[p[2], p[1], p[0]] for p in PARTS], 'partOf': PART_OF, 'type': written}
+QUESTIONS_JS = '\nconst QMETA=%s;\n' % json.dumps(QMETA, ensure_ascii=False) + open(os.path.join(HERE, 'questions.js'), encoding='utf8').read() + '\n'
 
-PART_JS = "const PART_OF=%s;\n" % json.dumps(PART_OF) + r"""(function(){const p=prog;prog=function(){p();const L=new Set(S.learned),T={},N={};DATA.forEach(d=>{const k=PART_OF[d[2]];N[k]=(N[k]||0)+1;if(L.has(d[3]))T[k]=(T[k]||0)+1});document.querySelectorAll('[data-pp]').forEach(r=>{const k=r.dataset.pp,c=Math.round(100*(T[k]||0)/N[k]);r.style.setProperty('--p',c);r.textContent=c+'%'})};prog();
+PART_JS = "const PART_OF=%s;\n" % json.dumps(PART_OF) + r"""(function(){const p=prog;prog=function(){p();const L=new Set(S.learned),T={},N={};DATA.forEach(d=>{const k=PART_OF[d[2]];N[k]=(N[k]||0)+1;if(L.has(d[3]))T[k]=(T[k]||0)+1});document.querySelectorAll('[data-pp]').forEach(r=>{const k=r.dataset.pp,c=N[k]?Math.round(100*(T[k]||0)/N[k]):0;r.style.setProperty('--p',c);r.textContent=c+'%'})};prog();
 const ch=document.getElementById('pchips');if(!ch)return;const secs=[...document.querySelectorAll('section.part')],orig=secs.map(x=>[...x.querySelectorAll('.topic')]);let f='all',srt=false;
-function apply(){secs.forEach((x,i)=>{x.hidden=f!=='all'&&x.dataset.part!==f;const g=x.querySelector('.grid'),a=orig[i].slice();if(srt)a.sort((u,v)=>v.dataset.n-u.dataset.n||u.getAttribute('href').localeCompare(v.getAttribute('href')));a.forEach(t=>g.append(t))});ch.querySelectorAll('[data-f]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.f===f));ch.querySelector('[data-sort]').setAttribute('aria-pressed',srt)}
+function apply(){secs.forEach((x,i)=>{x.hidden=f!=='all'&&x.dataset.part!==f;const g=x.querySelector('.grid'),a=orig[i].slice();if(srt)a.sort((u,v)=>v.dataset.n-u.dataset.n||u.getAttribute('href').localeCompare(v.getAttribute('href')));g&&a.forEach(t=>g.append(t))});ch.querySelectorAll('[data-f]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.f===f));ch.querySelector('[data-sort]').setAttribute('aria-pressed',srt)}
 ch.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.f)f=b.dataset.f;else srt=!srt;apply()}})();
 """
 
 UX_JS = r"""
+function cardRows(){const by={A:[],B:[]};DATA.forEach(d=>{const m=/^([AB])\d+$/.exec(d[0]);if(m&&!by[m[1]].includes(d[0]))by[m[1]].push(d[0])});
+return ['A','B'].map(L=>{const a=by[L].sort((x,y)=>x.slice(1)-y.slice(1));return '<div class="chips" style="padding:0;margin:0 0 12px;max-width:none;flex-wrap:wrap"><span class="mu" style="align-self:center">'+L+'-box cards:</span>'+(a.length?a.map(c=>'<a href="#/b/'+c+'">'+c+'</a>').join(''):'<span class="soon-t">coming soon</span>')+'</div>'}).join('')}
 const EMPTY_UI={bm:['No bookmarks yet','<path d="M6 3h12v18l-6-4-6 4z"/>'],fav:['No favourites yet','<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'],notes:['No notes yet','<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/>']};
 function emptyHTML(k){const u=EMPTY_UI[k]||EMPTY_UI.bm;return '<div class="empty"><svg viewBox="0 0 24 24" aria-hidden="true">'+u[1]+'</svg><b>'+u[0]+'</b><p>'+EMPTY[k].replace(/^No [a-z]+ yet\. /,'')+'</p><a class="pill" href="#/topics">Browse topics</a></div>'}
 (function(){
@@ -178,6 +171,20 @@ s = s.replace(_C_OLD, "document.querySelectorAll('[data-c=bm],[data-c=fav],[data
 # the page's own JS rewrites every .logo's innerHTML at load; keep the wordmark through that
 s, _n = re.subn(r"(\.logo'\)\.forEach\(l=>l\.innerHTML='<svg.*?</svg>)'", lambda m: m.group(1) + '<span class="wm">Patho<i>Viva</i></span>\'', s, count=1, flags=re.S)
 assert _n == 1
+# ---- A-box / B-box card chips, card page wording
+_OLDCH = """<div class="chips" style="padding:0;margin:0 0 20px;max-width:none;flex-wrap:wrap"><span class="mu" style="align-self:center">By B-number:</span>${BS.map(b=>`<a href="#/b/${b}">${b}</a>`).join('')}</div>`;prog()}"""
+assert _OLDCH in s
+s = s.replace(_OLDCH, "${cardRows()}`;prog()}", 1)
+_OLDB = "mkView('b','By B-number','B questions','Every question with the same NMC B-number, together.')"
+assert _OLDB in s
+s = s.replace(_OLDB, "mkView('b','By card','Card questions','Every question on the same viva card, together.')", 1)
+_OLDV = "document.querySelector('#v-b h1').textContent=b+' questions';"
+assert _OLDV in s
+s = s.replace(_OLDV, "document.querySelector('#v-b h1').textContent='Card '+b;", 1)
+_OLDE = "<small>${esc(d[4])}</small></a></div>`).join('')}\nfunction pSetup"
+assert _OLDE in s
+s = s.replace(_OLDE, "<small>${esc(d[4])}</small></a></div>`).join('')||'<p class=\"none\" style=\"display:block\">No questions on this card yet.</p>'}\nfunction pSetup", 1)
+
 # ---- premium polish: wordmark, trust line, social meta
 s, nlogo = re.subn(r'(<a class="logo"[^>]*>.*?</svg>)</a>', lambda m: m.group(1) + '<span class="wm">Patho<i>Viva</i></span></a>', s, flags=re.S)
 assert nlogo >= 1
