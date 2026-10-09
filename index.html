@@ -373,7 +373,7 @@ h2{margin-top:56px}
 .ph{box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 2px 6px rgba(11,31,58,.05),0 24px 60px rgba(11,31,58,.12)}
 
 /* 3. Hero: mesh gradient, grain, trust line */
-.hero-in::before{width:620px;height:520px;right:-40px;top:-60px;border-radius:0;filter:blur(30px);
+.hero-in::before{width:min(620px,100%);height:520px;right:0;top:-60px;border-radius:0;filter:blur(30px);
  background:radial-gradient(closest-side at 70% 30%,rgba(23,105,224,.16),transparent 70%),radial-gradient(closest-side at 25% 70%,rgba(43,179,214,.13),transparent 70%),radial-gradient(closest-side at 90% 80%,rgba(0,71,171,.10),transparent 70%)}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;mix-blend-mode:multiply;
  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
@@ -474,6 +474,23 @@ a,button,.topic,.card header,.qi-h,.qs-h{-webkit-tap-highlight-color:transparent
 @media(min-width:641px) and (max-width:1000px){.acts{display:flex;grid-template-columns:none;padding:2px 22px 14px}.act{height:34px;font-size:.8rem}}
 @media(max-width:640px){.acts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:0 10px 12px}.act{height:46px;flex-direction:column;gap:3px;padding:0 2px;border-radius:12px;font-size:10.5px}.act svg{width:18px;height:18px}}
 @media(pointer:coarse){.act{min-height:0}.qlearn{height:36px;min-height:0}}
+
+/* ===== Alignment fixes ===== */
+/* Nothing may widen the page: stops Chrome zooming out and leaving a blank strip on the right */
+html,body{max-width:100%}
+body{overflow-x:clip}
+/* Topic cards: number, title, preview and count start at the same top line in every card */
+.topic{align-items:start;align-content:start}
+.topic .no{align-self:start;line-height:1.1;padding-top:1px}
+.topic h3{align-self:start}
+.ring{top:14px}
+/* Section headings share the content edge (no optical offset) */
+h2,h3.sub,.part-h,.dc,.pc{margin-left:0;margin-right:0}
+/* Dashboard: no orphan card. Three across when there is room; when only two fit, the last one spans */
+.dash{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+@media(min-width:500px) and (max-width:745px){.dash>.dc:last-child{grid-column:1/-1}}
+/* Hero search preview follows the content edges on tablets/phones instead of floating centred */
+@media(max-width:1000px){.phones{justify-self:stretch;width:100%;max-width:none;margin:0}.ph{width:100%;max-width:none;margin:0}}
 </style><link rel="icon" type="image/svg+xml" href="icons/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png"><link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png"><script>try{const p=JSON.parse(localStorage.vivaState||'{}').pref||{};if(p.theme)document.documentElement.dataset.theme=p.theme}catch(e){}</script><link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0c131f" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f7f6f2" media="(prefers-color-scheme: light)">
